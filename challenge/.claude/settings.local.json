@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/images/image1.jpg)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/images/image5.jpg)",
+      "Bash(gh --version)",
+      "Bash(gh auth:*)"
+    ]
+  }
+}

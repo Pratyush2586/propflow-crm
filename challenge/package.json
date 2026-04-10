@@ -1,0 +1,11 @@
+{
+  "name": "propflow-crm",
+  "version": "1.0.0",
+  "description": "PropFlow CRM - Real Estate Intelligent CRM",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && npm start"
+  }
+}

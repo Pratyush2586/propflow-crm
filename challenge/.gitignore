@@ -1,0 +1,9 @@
+node_modules/
+backend/db/propflow.db
+backend/db/propflow.db-shm
+backend/db/propflow.db-wal
+dist/
+.env
+*.log
+.DS_Store
+Thumbs.db
