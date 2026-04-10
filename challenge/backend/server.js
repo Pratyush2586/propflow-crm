@@ -16,7 +16,12 @@ app.use('/api/opportunities', require('./routes/opportunities'));
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'PropFlow CRM', version: '1.0.0' }));
 
-app.listen(PORT, () => {
-  console.log(`\n🏡 PropFlow CRM Backend running at http://localhost:${PORT}`);
-  console.log(`   API: http://localhost:${PORT}/api/health\n`);
-});
+// Only listen when running directly (not on Vercel serverless)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🏡 PropFlow CRM Backend running at http://localhost:${PORT}`);
+    console.log(`   API: http://localhost:${PORT}/api/health\n`);
+  });
+}
+
+module.exports = app;
