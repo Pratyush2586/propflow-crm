@@ -101,7 +101,31 @@ export default function PropertyDetail() {
     </>
   );
 
-  if (!property) return null;
+  if (!property) return (
+    <>
+      <div className="page-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link to="/properties" className="btn btn-secondary btn-sm">← Propiedades</Link>
+          <div><h2>Propiedad no encontrada</h2></div>
+        </div>
+      </div>
+      <div className="page-body">
+        <div className="card" style={{ maxWidth: 480 }}>
+          <div className="card-body" style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🔄</div>
+            <h3 style={{ marginBottom: 8, fontWeight: 600 }}>Datos desactualizados</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.7 }}>
+              La base de datos se reinició desde que cargaste la lista.<br />
+              Recarga la página de propiedades para obtener los IDs actualizados.
+            </p>
+            <Link to="/properties" className="btn btn-primary" style={{ justifyContent: 'center' }}>
+              Volver a Propiedades
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 
   const img = (TYPE_IMAGES[property.type] || ['/images/image1.jpg'])[0];
 
