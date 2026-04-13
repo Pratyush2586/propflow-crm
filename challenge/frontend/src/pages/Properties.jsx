@@ -231,10 +231,13 @@ export default function Properties() {
                     </div>
                   )}
                   <div className="property-card-actions">
-                    <Link to={`/matches?property=${p.id}`} className="btn btn-sm btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
-                      ✨ Matches
+                    <Link to={`/properties/${p.id}`} className="btn btn-sm btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>
+                      Ver detalle
                     </Link>
-                    <button className="btn btn-sm btn-secondary" onClick={() => setModal(p)}>✏️ Editar</button>
+                    <Link to={`/matches?property=${p.id}`} className="btn btn-sm btn-primary">
+                      ✨
+                    </Link>
+                    <button className="btn btn-sm btn-secondary" onClick={() => setModal(p)}>✏️</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>🗑</button>
                   </div>
                 </div>
