@@ -21,6 +21,14 @@ const TYPE_IMAGES = {
   commercial:['/images/image1.jpg', '/images/image2.jpg'],
 };
 
+function parseImages(raw, type) {
+  try {
+    const imgs = typeof raw === 'string' ? JSON.parse(raw || '[]') : (raw || []);
+    if (imgs.length > 0) return imgs;
+  } catch (_) {}
+  return TYPE_IMAGES[type] || ['/images/image1.jpg'];
+}
+
 const ACTIVITY_ICONS  = { call: '📞', email: '✉️', visit: '🚪', note: '📝', reminder: '⏰' };
 const ACTIVITY_LABELS = { call: 'Llamada', email: 'Email', visit: 'Visita', note: 'Nota', reminder: 'Recordatorio' };
 
@@ -127,7 +135,8 @@ export default function PropertyDetail() {
     </>
   );
 
-  const img = (TYPE_IMAGES[property.type] || ['/images/image1.jpg'])[0];
+  const allImages = parseImages(property.images, property.type);
+  const [activeImg, setActiveImg] = useState(0);
 
   const handleDelete = async () => {
     if (!confirm(`¿Eliminar "${property.title}"? Se eliminarán también sus oportunidades.`)) return;
@@ -166,10 +175,14 @@ export default function PropertyDetail() {
           {/* ── Left column ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* Hero image + description */}
+            {/* Hero image + gallery + description */}
             <div className="card" style={{ overflow: 'hidden' }}>
-              <div style={{ height: 280, overflow: 'hidden', position: 'relative' }}>
-                <img src={img} alt={property.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ height: 280, overflow: 'hidden', position: 'relative', background: 'var(--beige)' }}>
+                <img
+                  src={allImages[activeImg]}
+                  alt={property.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity .2s' }}
+                />
                 <div style={{
                   position: 'absolute', bottom: 16, left: 16,
                   background: 'rgba(10,10,10,.7)', backdropFilter: 'blur(6px)',
@@ -178,7 +191,41 @@ export default function PropertyDetail() {
                 }}>
                   {formatPrice(property.price)}
                 </div>
+                {allImages.length > 1 && (
+                  <div style={{ position: 'absolute', bottom: 16, right: 16, display: 'flex', gap: 6 }}>
+                    {allImages.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setActiveImg(i)}
+                        style={{
+                          width: i === activeImg ? 24 : 8, height: 8,
+                          borderRadius: 4, border: 'none', cursor: 'pointer',
+                          background: i === activeImg ? 'white' : 'rgba(255,255,255,.5)',
+                          transition: 'all .2s', padding: 0,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
+              {allImages.length > 1 && (
+                <div style={{ display: 'flex', gap: 6, padding: '10px 16px', overflowX: 'auto', background: 'var(--gray-light)', borderBottom: '1px solid var(--border)' }}>
+                  {allImages.map((src, i) => (
+                    <div
+                      key={i}
+                      onClick={() => setActiveImg(i)}
+                      style={{
+                        width: 60, height: 44, flexShrink: 0, borderRadius: 4, overflow: 'hidden',
+                        cursor: 'pointer', border: i === activeImg ? '2px solid var(--gold)' : '2px solid transparent',
+                        transition: 'border-color .15s',
+                      }}
+                    >
+                      <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="card-body">
                 <div style={{ display: 'flex', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
                   {property.bedrooms > 0 && (
