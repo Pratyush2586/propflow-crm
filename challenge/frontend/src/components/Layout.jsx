@@ -2,15 +2,16 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { section: 'Overview', links: [
-    { to: '/',         icon: '▦',  label: 'Dashboard' },
+    { to: '/',          icon: '▦', label: 'Dashboard' },
+    { to: '/analytics', icon: '◫', label: 'Analytics' },
   ]},
   { section: 'Portfolio', links: [
-    { to: '/properties', icon: '⊞',  label: 'Propiedades' },
-    { to: '/clients',    icon: '◎',  label: 'Clientes' },
+    { to: '/properties', icon: '⊞', label: 'Propiedades' },
+    { to: '/clients',    icon: '◎', label: 'Clientes' },
   ]},
   { section: 'Negocio', links: [
-    { to: '/pipeline', icon: '⟶',  label: 'Pipeline' },
-    { to: '/matches',  icon: '◈',  label: 'Smart Matches' },
+    { to: '/pipeline', icon: '⟶', label: 'Pipeline' },
+    { to: '/matches',  icon: '◈', label: 'Smart Matches' },
   ]},
 ];
 

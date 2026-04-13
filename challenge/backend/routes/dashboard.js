@@ -64,4 +64,85 @@ router.get('/stats', (req, res) => {
   });
 });
 
+// GET analytics data — used by the Analytics page
+router.get('/analytics', (req, res) => {
+  // Closed deals grouped by month (last 6 months)
+  const monthly = db.prepare(`
+    SELECT strftime('%Y-%m', o.updated_at) as month,
+      COUNT(*) as deals,
+      SUM(p.price) as revenue
+    FROM opportunities o
+    JOIN properties p ON o.property_id = p.id
+    WHERE o.status = 'closed_won'
+      AND o.updated_at >= datetime('now', '-6 months')
+    GROUP BY month
+    ORDER BY month ASC
+  `).all();
+
+  // Pipeline value per stage
+  const pipelineStages = db.prepare(`
+    SELECT o.status, COUNT(*) as count, COALESCE(SUM(p.price), 0) as total_value
+    FROM opportunities o
+    JOIN properties p ON o.property_id = p.id
+    GROUP BY o.status
+    ORDER BY CASE o.status
+      WHEN 'interested'  THEN 1
+      WHEN 'visiting'    THEN 2
+      WHEN 'negotiating' THEN 3
+      WHEN 'closed_won'  THEN 4
+      WHEN 'closed_lost' THEN 5
+      ELSE 6
+    END
+  `).all();
+
+  // Conversion totals
+  const totalOpps = db.prepare('SELECT COUNT(*) as c FROM opportunities').get().c;
+  const wonOpps   = db.prepare("SELECT COUNT(*) as c FROM opportunities WHERE status = 'closed_won'").get().c;
+  const lostOpps  = db.prepare("SELECT COUNT(*) as c FROM opportunities WHERE status = 'closed_lost'").get().c;
+
+  const totalRevenue = db.prepare(`
+    SELECT COALESCE(SUM(p.price), 0) as total
+    FROM opportunities o JOIN properties p ON o.property_id = p.id
+    WHERE o.status = 'closed_won'
+  `).get().total;
+
+  // Top properties by buyer interest
+  const topProperties = db.prepare(`
+    SELECT p.id, p.title, p.location, p.price, p.type, p.status,
+      COUNT(o.id) as opp_count, ROUND(AVG(o.match_score), 0) as avg_score
+    FROM properties p JOIN opportunities o ON o.property_id = p.id
+    GROUP BY p.id
+    ORDER BY opp_count DESC, avg_score DESC
+    LIMIT 5
+  `).all();
+
+  // Activity breakdown by type
+  const activityBreakdown = db.prepare(`
+    SELECT type, COUNT(*) as count FROM activities GROUP BY type ORDER BY count DESC
+  `).all();
+
+  // Avg days from creation to close
+  const avgDaysRow = db.prepare(`
+    SELECT AVG(CAST((julianday(updated_at) - julianday(created_at)) AS REAL)) as avg_days
+    FROM opportunities WHERE status = 'closed_won'
+  `).get();
+
+  res.json({
+    monthly,
+    pipelineStages,
+    conversion: {
+      total:  totalOpps,
+      won:    wonOpps,
+      lost:   lostOpps,
+      active: totalOpps - wonOpps - lostOpps,
+      rate:   totalOpps > 0 ? Math.round((wonOpps / totalOpps) * 100) : 0,
+    },
+    totalRevenue,
+    topProperties,
+    activityBreakdown,
+    avgDaysToClose: avgDaysRow?.avg_days ? Math.round(avgDaysRow.avg_days) : 0,
+  });
+});
+
 module.exports = router;
+

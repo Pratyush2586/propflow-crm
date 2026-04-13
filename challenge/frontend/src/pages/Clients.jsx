@@ -271,8 +271,9 @@ export default function Clients() {
                       </td>
                       <td>
                         <div className="flex gap-8">
+                          <Link to={`/clients/${c.id}`} className="btn btn-xs btn-secondary">Ver</Link>
                           {(c.type === 'buyer' || c.type === 'both') && (
-                            <Link to={`/matches?client=${c.id}`} className="btn btn-xs btn-primary">✨ Matches</Link>
+                            <Link to={`/matches?client=${c.id}`} className="btn btn-xs btn-primary">✨</Link>
                           )}
                           <button className="btn btn-xs btn-secondary" onClick={() => setModal(c)}>✏️</button>
                           <button className="btn btn-xs btn-danger" onClick={() => handleDelete(c.id)}>🗑</button>
