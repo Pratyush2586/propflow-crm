@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useApi, apiCall } from '../hooks/useApi';
 import { StatusBadge, TypeBadge } from '../components/Badges';
 import { Link } from 'react-router-dom';
@@ -7,9 +7,7 @@ function formatPrice(p) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(p);
 }
 
-const TYPE_ICONS = { apartment: '🏢', house: '🏠', office: '🏢', land: '🌿', commercial: '🏪' };
-
-// Map property type to real images; cycle by index for variety
+// Fallback stock images by type
 const TYPE_IMAGES = {
   apartment: ['/images/image2.jpg', '/images/image1.jpg'],
   house:     ['/images/image5.jpg', '/images/image4.jpg', '/images/image3.jpg'],
@@ -18,23 +16,170 @@ const TYPE_IMAGES = {
   commercial:['/images/image1.jpg', '/images/image2.jpg'],
 };
 
-function getPropertyImage(type, index) {
-  const imgs = TYPE_IMAGES[type] || ['/images/image1.jpg'];
-  return imgs[index % imgs.length];
+function getPropertyImage(property, index) {
+  try {
+    const imgs = typeof property.images === 'string' ? JSON.parse(property.images) : (property.images || []);
+    if (imgs.length > 0) return imgs[0];
+  } catch (_) {}
+  const fallbacks = TYPE_IMAGES[property.type] || ['/images/image1.jpg'];
+  return fallbacks[index % fallbacks.length];
 }
 
+// Compress a File to a base64 JPEG string (max 1100px wide, quality 0.78)
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const MAX_W = 1100;
+        const ratio = img.width > MAX_W ? MAX_W / img.width : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Image uploader used inside PropertyForm ──────────────────────────────────
+function ImageUploader({ images, onChange }) {
+  const inputRef = useRef();
+  const [compressing, setCompressing] = useState(false);
+
+  const handleFiles = async (files) => {
+    if (!files.length) return;
+    setCompressing(true);
+    try {
+      const results = await Promise.all(
+        Array.from(files).slice(0, 5 - images.length).map(compressImage)
+      );
+      onChange([...images, ...results]);
+    } catch (e) {
+      alert('Error al procesar imagen: ' + e.message);
+    } finally {
+      setCompressing(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const remove = (i) => onChange(images.filter((_, idx) => idx !== i));
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '';
+    handleFiles(e.dataTransfer.files);
+  };
+
+  return (
+    <div>
+      {/* Thumbnail strip */}
+      {images.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+          {images.map((src, i) => (
+            <div key={i} style={{ position: 'relative', width: 88, height: 66, borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border)' }}>
+              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {i === 0 && (
+                <div style={{
+                  position: 'absolute', top: 3, left: 3,
+                  background: 'rgba(10,10,10,.65)', color: '#fff',
+                  fontSize: 9, fontWeight: 600, letterSpacing: '.06em',
+                  padding: '2px 5px', borderRadius: 2, textTransform: 'uppercase',
+                }}>
+                  Principal
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                style={{
+                  position: 'absolute', top: 3, right: 3,
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: 'rgba(139,58,58,.85)', border: 'none',
+                  color: '#fff', fontSize: 11, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Drop zone */}
+      {images.length < 5 && (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDrop={onDrop}
+          onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--gold)'; }}
+          onDragLeave={e => { e.currentTarget.style.borderColor = ''; }}
+          style={{
+            border: '2px dashed var(--border-dark)',
+            borderRadius: 6,
+            padding: '20px 16px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            transition: 'border-color .2s',
+            background: 'var(--gray-light)',
+          }}
+        >
+          {compressing ? (
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Comprimiendo...</span>
+          ) : (
+            <>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>📷</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
+                Arrastra fotos aquí o haz clic para seleccionar
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 4 }}>
+                JPG, PNG, WEBP · máx. {5 - images.length} foto{5 - images.length !== 1 ? 's' : ''} más · se comprimen automáticamente
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={e => handleFiles(e.target.files)}
+      />
+    </div>
+  );
+}
+
+// ── Property form ────────────────────────────────────────────────────────────
 function PropertyForm({ initial = {}, sellers = [], onSave, onCancel, loading }) {
+  const parseImages = (raw) => {
+    try { return Array.isArray(raw) ? raw : JSON.parse(raw || '[]'); }
+    catch (_) { return []; }
+  };
+
   const [form, setForm] = useState({
     title: '', type: 'apartment', price: '', location: '', neighborhood: '',
     bedrooms: '', bathrooms: '', size_m2: '', description: '', seller_id: '', status: 'available',
-    ...initial
+    ...initial,
+    budget_min: initial.budget_min || '',
+    budget_max: initial.budget_max || '',
+    preferred_bedrooms: initial.preferred_bedrooms || '',
   });
+  const [images, setImages] = useState(parseImages(initial.images));
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = e => {
     e.preventDefault();
-    onSave(form);
+    onSave({ ...form, images });
   };
 
   return (
@@ -98,6 +243,10 @@ function PropertyForm({ initial = {}, sellers = [], onSave, onCancel, loading })
             <label>Descripción</label>
             <textarea value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe el inmueble..." rows={3} />
           </div>
+          <div className="form-group" style={{ gridColumn: '1/-1' }}>
+            <label>Fotos ({images.length}/5)</label>
+            <ImageUploader images={images} onChange={setImages} />
+          </div>
         </div>
       </div>
       <div className="modal-footer">
@@ -110,13 +259,14 @@ function PropertyForm({ initial = {}, sellers = [], onSave, onCancel, loading })
   );
 }
 
+// ── Page ─────────────────────────────────────────────────────────────────────
 export default function Properties() {
   const { data: properties, loading, refetch } = useApi('/properties');
   const { data: clients } = useApi('/clients?type=seller');
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
-  const [modal, setModal] = useState(null); // null | 'create' | property
+  const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -196,7 +346,7 @@ export default function Properties() {
         </div>
 
         {loading ? (
-          <div className="loading"><div className="spinner"/>Cargando propiedades...</div>
+          <div className="loading"><div className="spinner" />Cargando propiedades...</div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
             <div className="icon">🏡</div>
@@ -209,7 +359,7 @@ export default function Properties() {
               <div className="property-card" key={p.id}>
                 <div className="property-card-img" style={{ padding: 0, overflow: 'hidden' }}>
                   <img
-                    src={getPropertyImage(p.type, i)}
+                    src={getPropertyImage(p, i)}
                     alt={p.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
@@ -234,9 +384,7 @@ export default function Properties() {
                     <Link to={`/properties/${p.id}`} className="btn btn-sm btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>
                       Ver detalle
                     </Link>
-                    <Link to={`/matches?property=${p.id}`} className="btn btn-sm btn-primary">
-                      ✨
-                    </Link>
+                    <Link to={`/matches?property=${p.id}`} className="btn btn-sm btn-primary">✨</Link>
                     <button className="btn btn-sm btn-secondary" onClick={() => setModal(p)}>✏️</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>🗑</button>
                   </div>
@@ -247,7 +395,6 @@ export default function Properties() {
         )}
       </div>
 
-      {/* Modal */}
       {modal && (
         <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal modal-lg">

@@ -57,17 +57,19 @@ router.get('/:id', (req, res) => {
 
 // POST create property
 router.post('/', (req, res) => {
-  const { title, type, price, location, neighborhood, bedrooms, bathrooms, size_m2, description, seller_id } = req.body;
+  const { title, type, price, location, neighborhood, bedrooms, bathrooms, size_m2, description, seller_id, images } = req.body;
 
   if (!title || !type || !price || !location) {
     return res.status(400).json({ error: 'title, type, price, and location are required' });
   }
 
+  const imagesJson = Array.isArray(images) ? JSON.stringify(images) : '[]';
+
   const id = uuidv4();
   db.prepare(`
-    INSERT INTO properties (id, title, type, price, location, neighborhood, bedrooms, bathrooms, size_m2, description, seller_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, title, type, Number(price), location, neighborhood || null, bedrooms || 0, bathrooms || 0, size_m2 || null, description || null, seller_id || null);
+    INSERT INTO properties (id, title, type, price, location, neighborhood, bedrooms, bathrooms, size_m2, description, seller_id, images)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, title, type, Number(price), location, neighborhood || null, bedrooms || 0, bathrooms || 0, size_m2 || null, description || null, seller_id || null, imagesJson);
 
   const property = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
   res.status(201).json(property);
@@ -78,7 +80,9 @@ router.put('/:id', (req, res) => {
   const existing = db.prepare('SELECT id FROM properties WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'Property not found' });
 
-  const { title, type, price, location, neighborhood, bedrooms, bathrooms, size_m2, description, status, seller_id } = req.body;
+  const { title, type, price, location, neighborhood, bedrooms, bathrooms, size_m2, description, status, seller_id, images } = req.body;
+
+  const imagesJson = Array.isArray(images) ? JSON.stringify(images) : null;
 
   db.prepare(`
     UPDATE properties SET
@@ -93,9 +97,10 @@ router.put('/:id', (req, res) => {
       description = COALESCE(?, description),
       status = COALESCE(?, status),
       seller_id = COALESCE(?, seller_id),
+      images = COALESCE(?, images),
       updated_at = datetime('now')
     WHERE id = ?
-  `).run(title, type, price ? Number(price) : null, location, neighborhood, bedrooms, bathrooms, size_m2, description, status, seller_id, req.params.id);
+  `).run(title, type, price ? Number(price) : null, location, neighborhood, bedrooms, bathrooms, size_m2, description, status, seller_id, imagesJson, req.params.id);
 
   res.json(db.prepare('SELECT * FROM properties WHERE id = ?').get(req.params.id));
 });
