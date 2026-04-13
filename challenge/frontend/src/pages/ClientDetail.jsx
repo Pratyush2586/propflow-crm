@@ -88,7 +88,31 @@ export default function ClientDetail() {
     </>
   );
 
-  if (!client) return null;
+  if (!client) return (
+    <>
+      <div className="page-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link to="/clients" className="btn btn-secondary btn-sm">← Clientes</Link>
+          <div><h2>Cliente no encontrado</h2></div>
+        </div>
+      </div>
+      <div className="page-body">
+        <div className="card" style={{ maxWidth: 480 }}>
+          <div className="card-body" style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🔄</div>
+            <h3 style={{ marginBottom: 8, fontWeight: 600 }}>Datos desactualizados</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.7 }}>
+              La base de datos se reinició desde que cargaste la lista.<br />
+              Recarga la página de clientes para obtener los IDs actualizados.
+            </p>
+            <Link to="/clients" className="btn btn-primary" style={{ justifyContent: 'center' }}>
+              Volver a Clientes
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 
   const isBuyer = client.type === 'buyer' || client.type === 'both';
 
