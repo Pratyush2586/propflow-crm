@@ -96,6 +96,7 @@ export default function PropertyDetail() {
   const { data: property, loading, refetch } = useApi(`/properties/${id}`);
   const { data: activities, refetch: refetchActivities } = useApi(`/activities?property_id=${id}`);
   const [showActivityModal, setShowActivityModal] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
 
   const handleActivitySaved = () => {
     refetchActivities();
@@ -136,7 +137,6 @@ export default function PropertyDetail() {
   );
 
   const allImages = parseImages(property.images, property.type);
-  const [activeImg, setActiveImg] = useState(0);
 
   const handleDelete = async () => {
     if (!confirm(`¿Eliminar "${property.title}"? Se eliminarán también sus oportunidades.`)) return;
