@@ -92,22 +92,19 @@ function initDB() {
 }
 
 function seedDemoData() {
-  const { v4: uuidv4 } = require('uuid');
-
-  // Sellers
+  // Fixed IDs — never change between reseeds so bookmarked URLs always work
   const sellers = [
-    { id: uuidv4(), name: 'Carlos Mendoza', email: 'carlos@email.com', phone: '+34 611 222 333', type: 'seller', status: 'active', priority: 'medium' },
-    { id: uuidv4(), name: 'Ana García', email: 'ana@email.com', phone: '+34 622 333 444', type: 'seller', status: 'active', priority: 'high' },
-    { id: uuidv4(), name: 'Empresa Inmobiliaria López', email: 'lopez@inmob.com', phone: '+34 633 444 555', type: 'both', status: 'active', priority: 'high' },
+    { id: 'c1000000-0000-0000-0000-000000000001', name: 'Carlos Mendoza',            email: 'carlos@email.com', phone: '+34 611 222 333', type: 'seller', status: 'active', priority: 'medium' },
+    { id: 'c1000000-0000-0000-0000-000000000002', name: 'Ana García',                email: 'ana@email.com',    phone: '+34 622 333 444', type: 'seller', status: 'active', priority: 'high'   },
+    { id: 'c1000000-0000-0000-0000-000000000003', name: 'Empresa Inmobiliaria López', email: 'lopez@inmob.com', phone: '+34 633 444 555', type: 'both',   status: 'active', priority: 'high'   },
   ];
 
-  // Buyers
   const buyers = [
-    { id: uuidv4(), name: 'María Rodríguez', email: 'maria@email.com', phone: '+34 644 555 666', type: 'buyer', status: 'active', budget_min: 180000, budget_max: 250000, preferred_location: 'Madrid Centro', preferred_type: 'apartment', preferred_bedrooms: 2, priority: 'high' },
-    { id: uuidv4(), name: 'Juan Pérez', email: 'juan@email.com', phone: '+34 655 666 777', type: 'buyer', status: 'active', budget_min: 300000, budget_max: 450000, preferred_location: 'Barcelona', preferred_type: 'house', preferred_bedrooms: 3, priority: 'high' },
-    { id: uuidv4(), name: 'Laura Sánchez', email: 'laura@email.com', phone: '+34 666 777 888', type: 'buyer', status: 'active', budget_min: 120000, budget_max: 180000, preferred_location: 'Madrid', preferred_type: 'apartment', preferred_bedrooms: 1, priority: 'medium' },
-    { id: uuidv4(), name: 'Roberto Torres', email: 'roberto@email.com', phone: '+34 677 888 999', type: 'buyer', status: 'active', budget_min: 400000, budget_max: 600000, preferred_location: 'Barcelona Eixample', preferred_type: 'house', preferred_bedrooms: 4, priority: 'medium' },
-    { id: uuidv4(), name: 'Sofía Martín', email: 'sofia@email.com', phone: '+34 688 999 000', type: 'buyer', status: 'inactive', budget_min: 200000, budget_max: 280000, preferred_location: 'Valencia', preferred_type: 'apartment', preferred_bedrooms: 2, priority: 'low' },
+    { id: 'c2000000-0000-0000-0000-000000000001', name: 'María Rodríguez', email: 'maria@email.com',   phone: '+34 644 555 666', type: 'buyer', status: 'active',   budget_min: 180000, budget_max: 250000, preferred_location: 'Madrid Centro',     preferred_type: 'apartment', preferred_bedrooms: 2, priority: 'high'   },
+    { id: 'c2000000-0000-0000-0000-000000000002', name: 'Juan Pérez',      email: 'juan@email.com',    phone: '+34 655 666 777', type: 'buyer', status: 'active',   budget_min: 300000, budget_max: 450000, preferred_location: 'Barcelona',           preferred_type: 'house',     preferred_bedrooms: 3, priority: 'high'   },
+    { id: 'c2000000-0000-0000-0000-000000000003', name: 'Laura Sánchez',   email: 'laura@email.com',   phone: '+34 666 777 888', type: 'buyer', status: 'active',   budget_min: 120000, budget_max: 180000, preferred_location: 'Madrid',              preferred_type: 'apartment', preferred_bedrooms: 1, priority: 'medium' },
+    { id: 'c2000000-0000-0000-0000-000000000004', name: 'Roberto Torres',  email: 'roberto@email.com', phone: '+34 677 888 999', type: 'buyer', status: 'active',   budget_min: 400000, budget_max: 600000, preferred_location: 'Barcelona Eixample',  preferred_type: 'house',     preferred_bedrooms: 4, priority: 'medium' },
+    { id: 'c2000000-0000-0000-0000-000000000005', name: 'Sofía Martín',    email: 'sofia@email.com',   phone: '+34 688 999 000', type: 'buyer', status: 'inactive', budget_min: 200000, budget_max: 280000, preferred_location: 'Valencia',            preferred_type: 'apartment', preferred_bedrooms: 2, priority: 'low'    },
   ];
 
   const insertClient = db.prepare(`
@@ -115,20 +112,24 @@ function seedDemoData() {
     VALUES (@id, @name, @email, @phone, @type, @status, @budget_min, @budget_max, @preferred_location, @preferred_type, @preferred_bedrooms, @priority, @last_contact)
   `);
 
-  const allClients = [...sellers, ...buyers];
-  for (const c of allClients) {
-    insertClient.run({ ...c, budget_min: c.budget_min || null, budget_max: c.budget_max || null, preferred_location: c.preferred_location || null, preferred_type: c.preferred_type || null, preferred_bedrooms: c.preferred_bedrooms || null, last_contact: new Date(Date.now() - Math.random() * 7 * 24 * 3600000).toISOString() });
+  for (const c of [...sellers, ...buyers]) {
+    insertClient.run({
+      ...c,
+      budget_min: c.budget_min || null, budget_max: c.budget_max || null,
+      preferred_location: c.preferred_location || null, preferred_type: c.preferred_type || null,
+      preferred_bedrooms: c.preferred_bedrooms || null,
+      last_contact: new Date(Date.now() - Math.random() * 7 * 24 * 3600000).toISOString(),
+    });
   }
 
-  // Properties
   const properties = [
-    { id: uuidv4(), title: 'Piso luminoso en Malasaña', type: 'apartment', price: 220000, location: 'Madrid Centro', neighborhood: 'Malasaña', bedrooms: 2, bathrooms: 1, size_m2: 75, description: 'Precioso piso reformado en el corazón de Malasaña. Mucha luz natural, suelos de parquet, cocina americana.', status: 'available', seller_id: sellers[0].id },
-    { id: uuidv4(), title: 'Chalet adosado con jardín', type: 'house', price: 380000, location: 'Barcelona', neighborhood: 'Sarrià', bedrooms: 4, bathrooms: 2, size_m2: 180, description: 'Espectacular chalet adosado con jardín privado de 60m². Zona residencial tranquila con buenas comunicaciones.', status: 'available', seller_id: sellers[1].id },
-    { id: uuidv4(), title: 'Estudio moderno en Gràcia', type: 'apartment', price: 145000, location: 'Barcelona', neighborhood: 'Gràcia', bedrooms: 1, bathrooms: 1, size_m2: 42, description: 'Estudio completamente equipado y amueblado. Perfecto para inversión o primera vivienda.', status: 'available', seller_id: sellers[2].id },
-    { id: uuidv4(), title: 'Ático dúplex con terraza', type: 'apartment', price: 495000, location: 'Barcelona Eixample', neighborhood: 'Eixample Dret', bedrooms: 3, bathrooms: 2, size_m2: 130, description: 'Impresionante ático dúplex con terraza de 45m². Vistas panorámicas a la ciudad. Garaje incluido.', status: 'available', seller_id: sellers[1].id },
-    { id: uuidv4(), title: 'Piso en Lavapiés', type: 'apartment', price: 175000, location: 'Madrid', neighborhood: 'Lavapiés', bedrooms: 2, bathrooms: 1, size_m2: 65, description: 'Piso reformado en barrio multicultural. Ideal para jóvenes. Cerca de metro y servicios.', status: 'reserved', seller_id: sellers[0].id },
-    { id: uuidv4(), title: 'Local comercial en zona prime', type: 'commercial', price: 320000, location: 'Madrid Centro', neighborhood: 'Gran Vía', bedrooms: 0, bathrooms: 1, size_m2: 95, description: 'Excelente local comercial en Gran Vía. Alto tráfico peatonal. Ideal para franquicia o comercio.', status: 'available', seller_id: sellers[2].id },
-    { id: uuidv4(), title: 'Casa unifamiliar en Valencia', type: 'house', price: 260000, location: 'Valencia', neighborhood: 'Campanar', bedrooms: 3, bathrooms: 2, size_m2: 150, description: 'Amplia casa unifamiliar con piscina privada y garaje doble. Zona residencial con colegios cercanos.', status: 'available', seller_id: sellers[0].id },
+    { id: 'p0000000-0000-0000-0000-000000000001', title: 'Piso luminoso en Malasaña',    type: 'apartment',  price: 220000, location: 'Madrid Centro',    neighborhood: 'Malasaña',     bedrooms: 2, bathrooms: 1, size_m2: 75,  description: 'Precioso piso reformado en el corazón de Malasaña. Mucha luz natural, suelos de parquet, cocina americana.',                                      status: 'available', seller_id: sellers[0].id },
+    { id: 'p0000000-0000-0000-0000-000000000002', title: 'Chalet adosado con jardín',    type: 'house',      price: 380000, location: 'Barcelona',         neighborhood: 'Sarrià',       bedrooms: 4, bathrooms: 2, size_m2: 180, description: 'Espectacular chalet adosado con jardín privado de 60m². Zona residencial tranquila con buenas comunicaciones.',                                  status: 'available', seller_id: sellers[1].id },
+    { id: 'p0000000-0000-0000-0000-000000000003', title: 'Estudio moderno en Gràcia',    type: 'apartment',  price: 145000, location: 'Barcelona',         neighborhood: 'Gràcia',       bedrooms: 1, bathrooms: 1, size_m2: 42,  description: 'Estudio completamente equipado y amueblado. Perfecto para inversión o primera vivienda.',                                                        status: 'available', seller_id: sellers[2].id },
+    { id: 'p0000000-0000-0000-0000-000000000004', title: 'Ático dúplex con terraza',     type: 'apartment',  price: 495000, location: 'Barcelona Eixample', neighborhood: 'Eixample Dret', bedrooms: 3, bathrooms: 2, size_m2: 130, description: 'Impresionante ático dúplex con terraza de 45m². Vistas panorámicas a la ciudad. Garaje incluido.',                                             status: 'available', seller_id: sellers[1].id },
+    { id: 'p0000000-0000-0000-0000-000000000005', title: 'Piso en Lavapiés',             type: 'apartment',  price: 175000, location: 'Madrid',            neighborhood: 'Lavapiés',     bedrooms: 2, bathrooms: 1, size_m2: 65,  description: 'Piso reformado en barrio multicultural. Ideal para jóvenes. Cerca de metro y servicios.',                                                        status: 'reserved',  seller_id: sellers[0].id },
+    { id: 'p0000000-0000-0000-0000-000000000006', title: 'Local comercial en zona prime', type: 'commercial', price: 320000, location: 'Madrid Centro',    neighborhood: 'Gran Vía',     bedrooms: 0, bathrooms: 1, size_m2: 95,  description: 'Excelente local comercial en Gran Vía. Alto tráfico peatonal. Ideal para franquicia o comercio.',                                               status: 'available', seller_id: sellers[2].id },
+    { id: 'p0000000-0000-0000-0000-000000000007', title: 'Casa unifamiliar en Valencia', type: 'house',      price: 260000, location: 'Valencia',          neighborhood: 'Campanar',     bedrooms: 3, bathrooms: 2, size_m2: 150, description: 'Amplia casa unifamiliar con piscina privada y garaje doble. Zona residencial con colegios cercanos.',                                          status: 'available', seller_id: sellers[0].id },
   ];
 
   const insertProperty = db.prepare(`
@@ -140,15 +141,14 @@ function seedDemoData() {
     insertProperty.run(p);
   }
 
-  // Some opportunities
   const insertOpp = db.prepare(`
     INSERT INTO opportunities (id, property_id, client_id, status, notes, priority, match_score)
     VALUES (@id, @property_id, @client_id, @status, @notes, @priority, @match_score)
   `);
 
-  insertOpp.run({ id: uuidv4(), property_id: properties[0].id, client_id: buyers[0].id, status: 'visiting', notes: 'La clienta está muy interesada. Visita programada para el viernes.', priority: 'high', match_score: 92 });
-  insertOpp.run({ id: uuidv4(), property_id: properties[1].id, client_id: buyers[1].id, status: 'negotiating', notes: 'En negociación. El cliente quiere bajar 15k.', priority: 'high', match_score: 88 });
-  insertOpp.run({ id: uuidv4(), property_id: properties[2].id, client_id: buyers[2].id, status: 'interested', notes: 'Primer contacto positivo.', priority: 'medium', match_score: 78 });
+  insertOpp.run({ id: 'op000000-0000-0000-0000-000000000001', property_id: properties[0].id, client_id: buyers[0].id, status: 'visiting',    notes: 'La clienta está muy interesada. Visita programada para el viernes.', priority: 'high',   match_score: 92 });
+  insertOpp.run({ id: 'op000000-0000-0000-0000-000000000002', property_id: properties[1].id, client_id: buyers[1].id, status: 'negotiating', notes: 'En negociación. El cliente quiere bajar 15k.',                        priority: 'high',   match_score: 88 });
+  insertOpp.run({ id: 'op000000-0000-0000-0000-000000000003', property_id: properties[2].id, client_id: buyers[2].id, status: 'interested',  notes: 'Primer contacto positivo.',                                          priority: 'medium', match_score: 78 });
 }
 
 initDB();
