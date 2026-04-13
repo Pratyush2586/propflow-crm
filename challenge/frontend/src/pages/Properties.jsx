@@ -25,7 +25,8 @@ function getPropertyImage(property, index) {
   return fallbacks[index % fallbacks.length];
 }
 
-// Compress a File to a base64 JPEG string (max 1100px wide, quality 0.78)
+// Compress a File to base64 JPEG — max 900px wide, quality 0.72
+// Target: ~80-180 KB per image as base64 → 5 photos ≈ 1 MB payload
 function compressImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,13 +35,13 @@ function compressImage(file) {
       const img = new Image();
       img.onerror = reject;
       img.onload = () => {
-        const MAX_W = 1100;
+        const MAX_W = 900;
         const ratio = img.width > MAX_W ? MAX_W / img.width : 1;
         const canvas = document.createElement('canvas');
         canvas.width  = Math.round(img.width  * ratio);
         canvas.height = Math.round(img.height * ratio);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.78));
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
       };
       img.src = e.target.result;
     };
